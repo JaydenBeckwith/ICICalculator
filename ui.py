@@ -1,17 +1,14 @@
 # ui.py — layout & styling
 from dash import dcc, html
 
-# --- Colours ---
-TEAL_BG = "#008080"   # page bg
-CARD_BG = "#ccf0e9"   # card bg
+TEAL_BG = "#008080"
+CARD_BG = "#ccf0e9"
 BORDER = "#0b4f4a"
 
-# --- Typography ---
-LABEL_STYLE = {"color": "black", "fontSize": "14px", "marginBottom": "6px", "fontWeight": 700}  # bold labels
+LABEL_STYLE = {"color": "black", "fontSize": "14px", "marginBottom": "6px", "fontWeight": 700}
 TITLE_STYLE = {"color": "#ecdd0b", "fontSize": "22px", "fontWeight": 700}
 SUBTLE_STYLE = {"color": "#ecdd0b", "fontSize": "13px"}
 
-# --- Layout ---
 CONTROL_STYLE = {
     "display": "grid",
     "gridTemplateColumns": "repeat(auto-fit, minmax(280px, 1fr))",
@@ -30,48 +27,33 @@ CARD_STYLE = {
     "minHeight": "180px",
 }
 
-# Scrollable inner area
-SCROLL_AREA = {
-    "flex": "1 1 auto",
-    "overflowY": "auto",
-    "maxHeight": "120px",
-    "paddingRight": "6px",
-}
+SCROLL_AREA = {"flex": "1 1 auto", "overflowY": "auto", "maxHeight": "120px", "paddingRight": "6px"}
 
-def build_layout(*, cancer_options, line_options, treatment_options, metric_options):
+def build_layout(*, cancer_options, line_options, treatment_options, metric_options, year_options):
     return html.Div(
         [
-            # Title
+            # Header
             html.Div(
                 [
                     html.Div(
                         [
                             html.Div("Stage IV Checkpoint Inhibitor Outcome Visualiser", style=TITLE_STYLE),
-                            html.Div("Select cancer type, treatment setting, regimen, and outcome metric", style=SUBTLE_STYLE),
+                            html.Div("Select cancer type, treatment setting, regimen, year, and outcome metric", style=SUBTLE_STYLE),
                         ],
                         style={"flex": "1"},
                     ),
                     html.Img(
                         src="assets/mia-logo-colour-yellow.svg",
-                        style={
-                            "height": "60px",   # adjust size as needed
-                            "marginLeft": "20px",
-                            "alignSelf": "center",
-                        },
+                        style={"height": "60px", "marginLeft": "20px", "alignSelf": "center"},
                     ),
                 ],
-                style={
-                    "display": "flex",
-                    "justifyContent": "space-between",
-                    "alignItems": "center",
-                    "marginBottom": "14px",
-                },
+                style={"display": "flex", "justifyContent": "space-between", "alignItems": "center", "marginBottom": "14px"},
             ),
 
-            # Controls row
+            # Controls
             html.Div(
                 [
-                    # Cancer(s)
+                    # Cancer
                     html.Div(
                         [
                             html.Div("Cancer Type", style=LABEL_STYLE),
@@ -89,7 +71,7 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                         style=CARD_STYLE,
                     ),
 
-                    # Line of therapy
+                    # Treatment setting
                     html.Div(
                         [
                             html.Div("Treatment Setting", style=LABEL_STYLE),
@@ -108,7 +90,7 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                         style=CARD_STYLE,
                     ),
 
-                    # Regimens
+                    # Regimens (stack colors)
                     html.Div(
                         [
                             html.Div("Therapy Regimen(s)", style=LABEL_STYLE),
@@ -116,7 +98,7 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                                 dcc.Checklist(
                                     id="treat-ck",
                                     options=treatment_options,
-                                    value=[opt["value"] for opt in treatment_options],
+                                    value=[opt["value"] for opt in treatment_options],  # preselect all
                                     inline=False,
                                     inputStyle={"marginRight": "6px"},
                                     labelStyle={"display": "block", "marginBottom": "6px", "color": "black"},
@@ -127,18 +109,27 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                         style=CARD_STYLE,
                     ),
 
-                    # Metric + View (merged card)
+                    # Metric + Year + View
                     html.Div(
                         [
                             html.Div("Outcome Metric", style=LABEL_STYLE),
                             dcc.Dropdown(
                                 id="metric-dd",
-                                options=metric_options,
+                                options=metric_options,              # ORR / PFS / OVS
                                 value=metric_options[0]["value"] if metric_options else None,
                                 clearable=False,
                                 style={"width": "100%", "position": "relative", "zIndex": 900},
                             ),
-                            html.Div(style={"height": "20px"}),  # spacing
+                            html.Div(style={"height": "12px"}),
+                            html.Div("Year", style=LABEL_STYLE),
+                            dcc.Dropdown(
+                                id="year-dd",
+                                options=year_options,                 # 1 / 2 / 3 (single)
+                                value=year_options[0]["value"] if year_options else "1",
+                                clearable=False,
+                                style={"width": "100%"},
+                            ),
+                            html.Div(style={"height": "12px"}),
                             html.Div("View", style=LABEL_STYLE),
                             dcc.RadioItems(
                                 id="view-radio",
@@ -162,57 +153,48 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
             # Plot
             html.Div(
                 [dcc.Loading(dcc.Graph(id="main-graph", config={"displayModeBar": False}), type="cube", color="black")],
-                style={**CARD_STYLE, "minHeight": "420px"},
+                style={**CARD_STYLE, "flex": "1 1 auto", "height": "65vh"},
             ),
 
             html.Div(style={"height": "8px"}),
-            dcc.Store(id="note-modal-open", data=False),
 
-        # Modal overlay (hidden by default; style controlled by callback)
-        html.Div(
-            id="note-modal",
-            children=html.Div(
-                [
-                    html.Div("Heads up", style={"fontWeight": 800, "fontSize": "18px", "marginBottom": "8px"}),
-                    html.P(
-                        "Must select at least 1 option in each control (cancers, treatment setting, regimens, and outcome metric).",
-                        style={"margin": 0, "lineHeight": "1.4"}
-                    ),
-                    html.Button(
-                        "OK, got it",
-                        id="close-note-modal",
-                        n_clicks=0,
-                        style={
-                            "marginTop": "14px",
-                            "padding": "8px 14px",
-                            "borderRadius": "10px",
-                            "border": "1px solid #0b4f4a",
-                            "background": "#ccf0e9",
-                            "cursor": "pointer",
-                            "fontWeight": 600
-                        },
-                    ),
-                ],
-                style={
-                    "width": "min(520px, 92vw)",
-                    "background": "#e6faf5",
-                    "border": "1px solid #0b4f4a",
-                    "borderRadius": "16px",
-                    "padding": "16px 18px",
-                    "boxShadow": "0 10px 30px rgba(0,0,0,0.25)",
-                },
+            # Modal
+            dcc.Store(id="note-modal-open", data=False),
+            html.Div(
+                id="note-modal",
+                children=html.Div(
+                    [
+                        html.Div("Heads up", style={"fontWeight": 800, "fontSize": "18px", "marginBottom": "8px"}),
+                        html.P(
+                            "Must select at least 1 option in each control (cancers, treatment setting, regimens, year, and outcome metric).",
+                            style={"margin": 0, "lineHeight": "1.4"},
+                        ),
+                        html.Button(
+                            "OK, got it",
+                            id="close-note-modal",
+                            n_clicks=0,
+                            style={
+                                "marginTop": "14px",
+                                "padding": "8px 14px",
+                                "borderRadius": "10px",
+                                "border": "1px solid #0b4f4a",
+                                "background": "#ccf0e9",
+                                "cursor": "pointer",
+                                "fontWeight": 600,
+                            },
+                        ),
+                    ],
+                    style={
+                        "width": "min(520px, 92vw)",
+                        "background": "#e6faf5",
+                        "border": "1px solid #0b4f4a",
+                        "borderRadius": "16px",
+                        "padding": "16px 18px",
+                        "boxShadow": "0 10px 30px rgba(0,0,0,0.25)",
+                    },
+                ),
+                style={"display": "none", "position": "fixed", "inset": 0, "backgroundColor": "rgba(0,0,0,0.35)", "zIndex": 9999, "alignItems": "center", "justifyContent": "center"},
             ),
-            style={  # default hidden; backend toggles 'display'
-                "display": "none",
-                "position": "fixed",
-                "inset": 0,
-                "backgroundColor": "rgba(0,0,0,0.35)",
-                "zIndex": 9999,
-                "display": "none",
-                "alignItems": "center",
-                "justifyContent": "center",
-            },
-        ),
         ],
         style={
             "fontFamily": "Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'",
