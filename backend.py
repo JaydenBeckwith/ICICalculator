@@ -2,7 +2,7 @@
 from typing import List, Dict
 import pandas as pd
 import plotly.express as px
-from dash import Input, Output
+from dash import Input, Output,State, callback_context
 
 def _filter_df(df: pd.DataFrame, cancers: List[str], lines: List[str]) -> pd.DataFrame:
     if cancers:
@@ -133,12 +133,12 @@ def register_callbacks(app, df: pd.DataFrame, config: Dict):
         for a in list(fig.layout.annotations or []):
             txt = a.text or ""
             if facet_prefix_to_strip in txt:
-                label = txt.split("=", 1)[1]          # remove 'cancer=' or 'line_label='
+                label = txt.split("=", 1)[1]         
                 labels.append(label)
                 a.text = label
                 a.font.color = "black"
                 a.textangle = 0
-                a.xref = "paper"                      # anchor to the figure's right edge
+                a.xref = "paper"                     
                 a.x = 1.0
                 a.xanchor = "left"
                 a.align = "left"
@@ -157,3 +157,41 @@ def register_callbacks(app, df: pd.DataFrame, config: Dict):
 
         return fig
 
+
+    @app.callback(
+        [Output("note-modal", "style"), Output("note-modal-open", "data")],
+        [
+            Input("cancer-dd", "value"),
+            Input("line-ck", "value"),
+            Input("treat-ck", "value"),
+            Input("metric-dd", "value"),
+            Input("close-note-modal", "n_clicks"),
+        ],
+        [State("note-modal-open", "data")],
+    )
+    def toggle_note_modal(cancers, lines, regimens, metric, close_clicks, is_open):
+        # Determine if selections are incomplete
+        missing = not cancers or not lines or not regimens or not metric
+
+        # Figure out what triggered
+        ctx = callback_context
+        trig = ctx.triggered[0]["prop_id"] if ctx.triggered else ""
+
+        # Close button always hides
+        if "close-note-modal" in trig:
+            open_now = False
+        else:
+            # Show when missing selections; hide when all good
+            open_now = bool(missing)
+
+        overlay_style = {
+            "position": "fixed",
+            "inset": 0,
+            "backgroundColor": "rgba(0,0,0,0.35)",
+            "zIndex": 9999,
+            "alignItems": "center",
+            "justifyContent": "center",
+            "display": "flex" if open_now else "none",
+        }
+        return overlay_style, open_now
+    

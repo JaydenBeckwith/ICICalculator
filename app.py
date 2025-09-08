@@ -68,9 +68,9 @@ metric_options = [{"label": m, "value": m} for m in metrics_available]
 
 # Colours to match dark theme
 COLOUR_MAP = {
-    "PD-1 + CTLA-4": "#07ac1d",  # violet-500
-    "Neither": "#e00a0a",        # orange-500
-    "PD-1 alone": "#22ee22",    # cyan-400
+    "PD-1 + CTLA-4": "#07ac1d", 
+    "Neither": "#e00a0a",      
+    "PD-1 alone": "#22ee22",  
 }
 
 # Shared config passed to UI and callbacks
@@ -92,6 +92,8 @@ app.layout = ui.build_layout(
     treatment_options=treatment_options,
     metric_options=metric_options,
 )
+
+
 
 # -----------------------------
 # Callbacks
