@@ -1,5 +1,5 @@
 # backend.py — helpers + callbacks
-# backend.py — helpers + callbacks
+
 from typing import List, Dict
 import pandas as pd
 import plotly.express as px
@@ -63,7 +63,7 @@ def register_callbacks(app, df: pd.DataFrame, config: Dict):
             Input("line-ck", "value"),
             Input("treat-ck", "value"),
             Input("metric-dd", "value"),   # ORR / PFS / OVS
-            Input("year-dd", "value"),     # 1 / 2 / 3
+            Input("year-dd", "value"),     # 1 / 2
             Input("view-radio", "value"),
         ],
     )
@@ -122,18 +122,29 @@ def register_callbacks(app, df: pd.DataFrame, config: Dict):
 
         fig.update_layout(barmode="stack", barnorm="percent")
         fig.update_traces(marker_line_width=0)
+        # ... after building fig with px.bar and before returning it:
         fig.update_layout(
-            paper_bgcolor="#ccf0e9",
-            plot_bgcolor="#ccf0e9",
-            legend_title_text="Regimen",
-            margin=dict(t=60, r=120, b=80, l=80),
-            font_color="black",
-            title_font_color="black",
-            template=None,
-            legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
-        )
+        autosize=True,
+        paper_bgcolor="#ccf0e9",
+        plot_bgcolor="#ccf0e9",
+        legend_title_text="Regimen",
+        margin=dict(t=130, r=100, b=100, l=80),  # extra bottom margin
+        font_color="black",
+        title_font_color="black",
+        template=None,
+        legend=dict(
+        orientation="h",   # horizontal
+        yanchor="bottom",
+        y=1.1,             # above plot
+        xanchor="center",
+        x=0.5,
+    ),
+    )
+
+        # axes (unchanged)
         fig.update_xaxes(title=None, rangemode="tozero", range=[0, 100], ticksuffix="%", color="black")
         fig.update_yaxes(title=None, color="black", automargin=True)
+
 
         # Clean facet labels on right
         labels = []

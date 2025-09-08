@@ -6,8 +6,8 @@ CARD_BG = "#ccf0e9"
 BORDER = "#0b4f4a"
 
 LABEL_STYLE = {"color": "black", "fontSize": "14px", "marginBottom": "6px", "fontWeight": 700}
-TITLE_STYLE = {"color": "#ecdd0b", "fontSize": "22px", "fontWeight": 700}
-SUBTLE_STYLE = {"color": "#ecdd0b", "fontSize": "13px"}
+TITLE_STYLE = {"color": "#ecdd0b", "fontSize": "24px", "fontWeight": 700}
+SUBTLE_STYLE = {"color": "#ecdd0b", "fontSize": "16px"}
 
 CONTROL_STYLE = {
     "display": "grid",
@@ -38,7 +38,10 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                     html.Div(
                         [
                             html.Div("Stage IV Checkpoint Inhibitor Outcome Visualiser", style=TITLE_STYLE),
-                            html.Div("Select cancer type, treatment setting, regimen, year, and outcome metric", style=SUBTLE_STYLE),
+                            html.Div(
+                                "Select cancer type, treatment setting, regimen, year, and outcome metric",
+                                style=SUBTLE_STYLE,
+                            ),
                         ],
                         style={"flex": "1"},
                     ),
@@ -47,7 +50,12 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                         style={"height": "60px", "marginLeft": "20px", "alignSelf": "center"},
                     ),
                 ],
-                style={"display": "flex", "justifyContent": "space-between", "alignItems": "center", "marginBottom": "14px"},
+                style={
+                    "display": "flex",
+                    "justifyContent": "space-between",
+                    "alignItems": "center",
+                    "marginBottom": "14px",
+                },
             ),
 
             # Controls
@@ -62,6 +70,7 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                                     id="cancer-dd",
                                     options=cancer_options,
                                     multi=True,
+                                    value=["melanoma"],  # preselect melanoma
                                     placeholder="Select one or more cancers...",
                                     style={"width": "100%", "zIndex": 1000, "position": "relative"},
                                 ),
@@ -90,7 +99,7 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                         style=CARD_STYLE,
                     ),
 
-                    # Regimens (stack colors)
+                    # Regimens
                     html.Div(
                         [
                             html.Div("Therapy Regimen(s)", style=LABEL_STYLE),
@@ -98,7 +107,7 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                                 dcc.Checklist(
                                     id="treat-ck",
                                     options=treatment_options,
-                                    value=[opt["value"] for opt in treatment_options],  # preselect all
+                                    value=[opt["value"] for opt in treatment_options],
                                     inline=False,
                                     inputStyle={"marginRight": "6px"},
                                     labelStyle={"display": "block", "marginBottom": "6px", "color": "black"},
@@ -115,7 +124,7 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                             html.Div("Outcome Metric", style=LABEL_STYLE),
                             dcc.Dropdown(
                                 id="metric-dd",
-                                options=metric_options,              # ORR / PFS / OVS
+                                options=metric_options,   # ORR / PFS / OVS
                                 value=metric_options[0]["value"] if metric_options else None,
                                 clearable=False,
                                 style={"width": "100%", "position": "relative", "zIndex": 900},
@@ -124,7 +133,7 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                             html.Div("Year", style=LABEL_STYLE),
                             dcc.Dropdown(
                                 id="year-dd",
-                                options=year_options,                 # 1 / 2 / 3 (single)
+                                options=year_options,    # 1 / 2 / 3
                                 value=year_options[0]["value"] if year_options else "1",
                                 clearable=False,
                                 style={"width": "100%"},
@@ -148,16 +157,33 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                 style=CONTROL_STYLE,
             ),
 
-            html.Div(style={"height": "12px"}),
-
-            # Plot
+            # Plot (fills remaining height; no overflow past the card)
             html.Div(
-                [dcc.Loading(dcc.Graph(id="main-graph", config={"displayModeBar": False}), type="cube", color="black")],
-                style={**CARD_STYLE, "flex": "1 1 auto", "height": "65vh"},
+                [
+                    dcc.Loading(
+                        dcc.Graph(
+                            id="main-graph",
+                            config={"displayModeBar": False, "responsive": True},
+                            style={
+                                "flex": "1 1 auto",
+                                "height": "100%",          # stretch fully
+                                "width": "100%",
+                            },
+                        ),
+                        type="cube",
+                        color=TEAL_BG,
+                    )
+                ],
+                style={
+                    **CARD_STYLE,
+                    "flex": "1 1 auto",
+                    "minHeight": "400px",      # increased baseline height
+                    "height": "70vh",          # scale with viewport
+                    "overflow": "hidden",
+                    "paddingTop": "8px",       # tighter top padding
+                    "paddingBottom": "12px",   # room for legend if at bottom
+                },
             ),
-
-            html.Div(style={"height": "8px"}),
-
             # Modal
             dcc.Store(id="note-modal-open", data=False),
             html.Div(
@@ -193,13 +219,25 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                         "boxShadow": "0 10px 30px rgba(0,0,0,0.25)",
                     },
                 ),
-                style={"display": "none", "position": "fixed", "inset": 0, "backgroundColor": "rgba(0,0,0,0.35)", "zIndex": 9999, "alignItems": "center", "justifyContent": "center"},
+                style={
+                    "display": "none",
+                    "position": "fixed",
+                    "inset": 0,
+                    "backgroundColor": "rgba(0,0,0,0.35)",
+                    "zIndex": 9999,
+                    "alignItems": "center",
+                    "justifyContent": "center",
+                },
             ),
         ],
         style={
             "fontFamily": "Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'",
             "backgroundColor": TEAL_BG,
-            "minHeight": "100vh",
+            "height": "100vh",      # full viewport height
             "padding": "20px",
+            "display": "flex",      # flex column
+            "flexDirection": "column",
+            "gap": "12px",
         },
     )
+
