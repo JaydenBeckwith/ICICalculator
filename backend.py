@@ -48,7 +48,7 @@ def register_callbacks(app, df: pd.DataFrame, config: Dict):
         Output("main-graph", "figure"),
         [
             Input("cancer-dd", "value"),
-            Input("line-dd", "value"),
+            Input("line-ck", "value"),
             Input("treat-ck", "value"),
             Input("metric-dd", "value"),
             Input("view-radio", "value"),
@@ -58,7 +58,7 @@ def register_callbacks(app, df: pd.DataFrame, config: Dict):
         # Guard conditions
         if not cancer_sel or not line_sel or not treat_sel or not metric_sel:
             fig = px.bar(title="Please make selections in all controls to view results.")
-            fig.update_layout(template="plotly_dark", paper_bgcolor="#0b0f16", plot_bgcolor="#0b0f16")
+            fig.update_layout(paper_bgcolor="#ccf0e9", plot_bgcolor="#ccf0e9", font_color="black", template=None)
             return fig
 
         dff = _filter_df(df, cancers=cancer_sel, lines=line_sel)
@@ -72,44 +72,88 @@ def register_callbacks(app, df: pd.DataFrame, config: Dict):
 
         if long.empty:
             fig = px.bar(title="No data available for the current selections.")
-            fig.update_layout(template="plotly_dark", paper_bgcolor="#0b0f16", plot_bgcolor="#0b0f16")
+            fig.update_layout(paper_bgcolor="#ccf0e9", plot_bgcolor="#ccf0e9", font_color="black", template=None)
             return fig
 
-        # Normalized stacked bars (percent) — set via update_layout for older Plotly
+        # Horizontal bars + facets
         if view_sel == "by_line":
             fig = px.bar(
                 long,
-                x="line_label",
-                y=metric_sel,
+                y="line_label",         # flipped
+                x=metric_sel,           # flipped
                 color="regimen",
-                facet_col="cancer",
+                facet_row="cancer",     # row facets instead of columns
                 category_orders={"line_label": [LINE_LABELS.get("1", "1"), LINE_LABELS.get("2+", "2+")]},
                 color_discrete_map=COLOR_MAP,
+                orientation="h",
+                title=f"{metric_sel}",
             )
-            fig.update_layout(title=f"{metric_sel} — normalized by treatment setting (line)")
+            facet_prefix_to_strip = "cancer="
         else:
             fig = px.bar(
                 long,
-                x="cancer",
-                y=metric_sel,
+                y="cancer",
+                x=metric_sel,
                 color="regimen",
-                facet_col="line_label",
+                facet_row="line_label",
                 color_discrete_map=COLOR_MAP,
+                orientation="h",
+                title=f"{metric_sel}",
             )
-            fig.update_layout(title=f"{metric_sel} — normalized by cancer")
+            facet_prefix_to_strip = "line_label="
 
-        # make it normalized stacked percent here
+        # Normalized stacked percent (compatible with older Plotly via update_layout)
         fig.update_layout(barmode="stack", barnorm="percent")
 
+        # Base styling + legend at bottom
         fig.update_traces(marker_line_width=0)
         fig.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="#0b0f16",
-            plot_bgcolor="#0b0f16",
+            paper_bgcolor="#ccf0e9",
+            plot_bgcolor="#ccf0e9",
             legend_title_text="Regimen",
-            margin=dict(t=60, r=20, b=40, l=40),
-            yaxis_ticksuffix="%",
+            margin=dict(t=60, r=120, b=80, l=80),  # start with decent margins
+            font_color="black",
+            title_font_color="black",
+            template=None,  # avoid dark template gridlines on light bg
+            legend=dict(
+                orientation="h",
+                yanchor="top",
+                y=-0.2,
+                xanchor="center",
+                x=0.5,
+            ),
         )
-        fig.update_yaxes(title=metric_sel, rangemode="tozero", range=[0, 100])
-        fig.update_xaxes(title=None)
+
+        # Axes (no bottom "ORR" etc.)
+        fig.update_xaxes(title=None, rangemode="tozero", range=[0, 100], ticksuffix="%", color="black")
+        fig.update_yaxes(title=None, color="black", automargin=True)
+
+        # --- Clean & protect facet labels on the right ---
+        labels = []
+        for a in list(fig.layout.annotations or []):
+            txt = a.text or ""
+            if facet_prefix_to_strip in txt:
+                label = txt.split("=", 1)[1]          # remove 'cancer=' or 'line_label='
+                labels.append(label)
+                a.text = label
+                a.font.color = "black"
+                a.textangle = 0
+                a.xref = "paper"                      # anchor to the figure's right edge
+                a.x = 1.0
+                a.xanchor = "left"
+                a.align = "left"
+
+        # Increase right margin dynamically based on longest label length (~8 px per char)
+        if labels:
+            max_len = max(len(s) for s in labels)
+            extra_right = 8 * max_len
+            current = fig.layout.margin.r or 0
+            fig.update_layout(margin=dict(
+                t=fig.layout.margin.t,
+                b=fig.layout.margin.b,
+                l=fig.layout.margin.l,
+                r=max(current, 100 + extra_right),
+            ))
+
         return fig
+

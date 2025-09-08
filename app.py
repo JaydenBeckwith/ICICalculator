@@ -68,9 +68,9 @@ metric_options = [{"label": m, "value": m} for m in metrics_available]
 
 # Colours to match dark theme
 COLOUR_MAP = {
-    "PD-1 + CTLA-4": "#8b5cf6",  # violet-500
-    "Neither": "#f97316",        # orange-500
-    "PD-1 alone": "#22d3ee",    # cyan-400
+    "PD-1 + CTLA-4": "#07ac1d",  # violet-500
+    "Neither": "#e00a0a",        # orange-500
+    "PD-1 alone": "#22ee22",    # cyan-400
 }
 
 # Shared config passed to UI and callbacks
