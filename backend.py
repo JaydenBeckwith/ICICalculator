@@ -1,9 +1,9 @@
-# backend.py — helpers + callbacks
+# backend - helpers + callbacks
 
 from typing import List, Dict
 import pandas as pd
 import plotly.express as px
-from dash import Input, Output, State, callback_context
+from dash import Input, Output, State
 
 def _filter_df(df: pd.DataFrame, cancers: List[str], lines: List[str]) -> pd.DataFrame:
 
@@ -92,6 +92,7 @@ def register_callbacks(app, df: pd.DataFrame, config: Dict):
         ],
     )
     def update_graph(cancer_sel, line_sel, metric_base, year_sel, view_sel):
+   
         if not cancer_sel or not line_sel or not metric_base or not year_sel:
             fig = px.bar(title="Please make selections in all controls to view results.")
             fig.update_layout(paper_bgcolor="#ccf0e9", plot_bgcolor="#ccf0e9", font_color="black", template=None)
@@ -105,8 +106,7 @@ def register_callbacks(app, df: pd.DataFrame, config: Dict):
 
         dff = _filter_df(df, cancers=cancer_sel, lines=line_sel)
 
-        # 🔧 Dynamically compute the regimen prefixes that actually exist for this suffix
-        # e.g., if dff has columns ["A_ORR","B_ORR","N_ORR"], this yields ["A_","B_","N_"]
+        # Dynamically discover regimen prefixes that exist for this suffix
         reg_prefixes = sorted({
             col[:-len(suffix)]
             for col in dff.columns
@@ -126,7 +126,7 @@ def register_callbacks(app, df: pd.DataFrame, config: Dict):
             fig.update_layout(paper_bgcolor="#ccf0e9", plot_bgcolor="#ccf0e9", font_color="black", template=None)
             return fig
 
-        # ----- plotting (unchanged) -----
+        # Build figure + facet context
         if view_sel == "by_line":
             fig = px.bar(
                 long,
@@ -137,9 +137,12 @@ def register_callbacks(app, df: pd.DataFrame, config: Dict):
                 category_orders={"line_label": [LINE_LABELS.get("1", "1"), LINE_LABELS.get("2+", "2+")]},
                 color_discrete_map=COLOR_MAP,
                 orientation="h",
-                title=f"{metric_base} ({'Year ' + str(year_sel) if metric_base!='ORR' else 'Overall'})",
+                title=f"{metric_base} ({'Year ' + str(year_sel) if metric_base != 'ORR' else 'Overall'})",
             )
-            facet_prefix_to_strip = "cancer="
+            facet_prefix = "cancer="
+            facet_count = long["cancer"].nunique() or 1
+            left_labels  = [LINE_LABELS.get("1", "1"), LINE_LABELS.get("2+", "2+")]
+            right_labels = sorted(long["cancer"].astype(str).unique().tolist())
         else:
             fig = px.bar(
                 long,
@@ -149,51 +152,69 @@ def register_callbacks(app, df: pd.DataFrame, config: Dict):
                 facet_row="line_label",
                 color_discrete_map=COLOR_MAP,
                 orientation="h",
-                title=f"{metric_base} ({'Year ' + str(year_sel) if metric_base!='ORR' else 'Overall'})",
+                title=f"{metric_base} ({'Year ' + str(year_sel) if metric_base != 'ORR' else 'Overall'})",
             )
-            facet_prefix_to_strip = "line_label="
+            facet_prefix = "line_label="
+            facet_count = long["line_label"].nunique() or 1
+            left_labels  = sorted(long["cancer"].astype(str).unique().tolist())
+            right_labels = [LINE_LABELS.get("1", "1"), LINE_LABELS.get("2+", "2+")]
 
+        # Core styling + legend at bottom
         fig.update_layout(
-            barmode="stack", barnorm="percent",
+            barmode="stack",
+            barnorm="percent",
             autosize=True,
             paper_bgcolor="#ccf0e9",
             plot_bgcolor="#ccf0e9",
             legend_title_text="Regimen",
-            margin=dict(t=130, r=100, b=100, l=80),
             font_color="black",
             title_font_color="black",
             template=None,
-            legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="center", x=0.5),
+            legend=dict(
+                orientation="h",
+                yanchor="top",
+                y=-0.22,          # below plot
+                xanchor="center",
+                x=0.5,
+                bgcolor="rgba(0,0,0,0)",
+            ),
         )
         fig.update_traces(marker_line_width=0)
         fig.update_xaxes(title=None, rangemode="tozero", range=[0, 100], ticksuffix="%", color="black")
         fig.update_yaxes(title=None, color="black", automargin=True)
 
-        # facet label cleanup (unchanged) ...
-        labels = []
-        for a in list(fig.layout.annotations or []):
-            txt = a.text or ""
-            if facet_prefix_to_strip in txt:
-                label = txt.split("=", 1)[1]
-                labels.append(label)
-                a.text = label
-                a.font.color = "black"
-                a.textangle = 0
-                a.xref = "paper"
-                a.x = 1.0
-                a.xanchor = "left"
-                a.align = "left"
-        if labels:
-            max_len = max(len(s) for s in labels)
-            extra_right = 8 * max_len
-            current = fig.layout.margin.r or 0
-            fig.update_layout(margin=dict(
-                t=fig.layout.margin.t, b=fig.layout.margin.b, l=fig.layout.margin.l,
-                r=max(current, 100 + extra_right),
-            ))
+        # Make facet row labels horizontal on the right edge
+        for ann in list(fig.layout.annotations or []):
+            txt = ann.text or ""
+            if facet_prefix in txt:
+                ann.text = txt.split("=", 1)[1]  # strip "cancer=" / "line_label="
+                ann.textangle = 0                # horizontal
+                ann.font.color = "black"
+                ann.xref = "paper"
+                ann.x = 1.0                      # right edge of plotting area
+                ann.xanchor = "left"
+                ann.align = "left"
+
+        # Dynamic margins: left for y ticks, right for (now horizontal) facet labels
+        max_left_len = max((len(str(s)) for s in left_labels), default=1)
+        left_margin = max(90, int(7.5 * max_left_len))
+
+        max_right_len = max((len(str(s)) for s in right_labels), default=1)
+        right_margin = max(120, int(9.0 * max_right_len))
+
+        bottom_margin = 140  # room for bottom legend
+        fig.update_layout(margin=dict(t=130, r=right_margin, b=bottom_margin, l=left_margin))
+
+        # Dynamic height per facet row — prevents crowding as facets increase
+        BASE_H = 320
+        ROW_H  = 160
+        MIN_H  = 550
+        fig.update_layout(height=max(MIN_H, BASE_H + ROW_H * facet_count))
+
         return fig
-    
-    # Modal controller (remove treat-ck dependency)
+
+
+    # Modal (unchanged except no regimen input)
     @app.callback(
         [Output("note-modal", "style"), Output("note-modal-open", "data")],
         [
@@ -206,6 +227,7 @@ def register_callbacks(app, df: pd.DataFrame, config: Dict):
         [State("note-modal-open", "data")],
     )
     def toggle_note_modal(cancers, lines, metric, year, close_clicks, is_open):
+        from dash import callback_context
         missing = not cancers or not lines or not metric or not year
         trig = (callback_context.triggered[0]["prop_id"] if callback_context.triggered else "")
         open_now = False if "close-note-modal" in trig else bool(missing)

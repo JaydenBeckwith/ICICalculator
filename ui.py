@@ -1,4 +1,4 @@
-# ui.py — layout & styling
+# ui layout & styling
 from dash import dcc, html
 
 TEAL_BG = "#008080"
@@ -38,9 +38,7 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                     html.Div(
                         [
                             html.Div("Stage IV Checkpoint Inhibitor Outcome Visualiser", style=TITLE_STYLE),
-                            html.Div(
-                                style=SUBTLE_STYLE,
-                            ),
+                            html.Div(style=SUBTLE_STYLE),
                         ],
                         style={"flex": "1"},
                     ),
@@ -137,7 +135,7 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                 style=CONTROL_STYLE,
             ),
 
-            # Plot (fills remaining height; no overflow past the card)
+            # Plot card (auto-grows; does not shrink when controls get taller)
             html.Div(
                 [
                     dcc.Loading(
@@ -146,8 +144,8 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                             config={"displayModeBar": False, "responsive": True},
                             style={
                                 "flex": "1 1 auto",
-                                "height": "100%",          # stretch fully
                                 "width": "100%",
+                                # no fixed height; figure layout height controls size
                             },
                         ),
                         type="cube",
@@ -156,14 +154,15 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                 ],
                 style={
                     **CARD_STYLE,
-                    "flex": "1 1 auto",
-                    "minHeight": "400px",      # increased baseline height
-                    "height": "70vh",          # scale with viewport
+                    "flex": "0 0 auto",       # do not let flexbox shrink this card
+                    "minHeight": "500px",     # baseline height
+                    "height": "auto",         # grow with figure height
                     "overflow": "hidden",
-                    "paddingTop": "8px",       # tighter top padding
-                    "paddingBottom": "12px",   # room for legend if at bottom
+                    "paddingTop": "8px",
+                    "paddingBottom": "12px",
                 },
             ),
+
             # Modal
             dcc.Store(id="note-modal-open", data=False),
             html.Div(
@@ -172,7 +171,7 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                     [
                         html.Div("Heads up", style={"fontWeight": 800, "fontSize": "18px", "marginBottom": "8px"}),
                         html.P(
-                            "Must select at least 1 option in each control (cancers, treatment setting, regimens, year, and outcome metric).",
+                            "Must select at least 1 option in each control (cancers, treatment setting, year, and outcome metric).",
                             style={"margin": 0, "lineHeight": "1.4"},
                         ),
                         html.Button(
@@ -213,11 +212,11 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
         style={
             "fontFamily": "Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'",
             "backgroundColor": TEAL_BG,
-            "height": "100vh",      # full viewport height
+            "minHeight": "100vh",  
+            "overflowY": "auto",    # allow page to scroll when controls grow
             "padding": "20px",
-            "display": "flex",      # flex column
+            "display": "flex",
             "flexDirection": "column",
             "gap": "12px",
         },
     )
-

@@ -1,6 +1,6 @@
 # ICICalculator
 
-Immune Checkpoint Inhibitor (ICI) Calculator — an application for determining patient response rates based on cancer type, line of therapy, and treatment regimen.
+Immune Checkpoint Inhibitor (ICI) Calculator - a dashboard visualiser for determining patient response rates based on cancer type, line of therapy, and treatment regimen.
 
 ---
 
