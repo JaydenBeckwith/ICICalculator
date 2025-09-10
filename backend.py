@@ -35,7 +35,7 @@ def _melt_for_plot(df: pd.DataFrame, metric_suffix: str, reg_prefixes: List[str]
     Reshape a wide-format df into a long format suitable for plotting treatment regimens.
 
     This function selects columns from the input DataFrame whose names are constructed It then melts these columns 
-    into a long format, maps regimen prefixes to human-readable treatment names, 
+    into a long format, maps regimen prefixes to treatment names,
     ensures numeric values for the selected metric, and applies custom line labels.
 
     Args:
