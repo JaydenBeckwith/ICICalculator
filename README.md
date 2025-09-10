@@ -18,7 +18,7 @@ It provides utilities to:
 Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/yourusername/ICICalculator.git
+git clone https://github.com/JaydenBeckwith/ICICalculator.git
 
 # build the docker image
 docker build -t ici-calculator .     
