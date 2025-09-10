@@ -241,3 +241,12 @@ def register_callbacks(app, df: pd.DataFrame, config: Dict):
             "display": "flex" if open_now else "none",
         }
         return overlay_style, open_now
+    
+    @app.callback(
+    Output("year-block", "style"),
+    Input("metric-dd", "value"),
+    )
+    def _toggle_year_block(metric):
+        if (metric or "").upper() == "ORR":
+            return {"display": "none"}
+        return {"display": "block"}

@@ -27,7 +27,13 @@ CARD_STYLE = {
     "minHeight": "180px",
 }
 
-SCROLL_AREA = {"flex": "1 1 auto", "overflowY": "auto", "maxHeight": "120px", "paddingRight": "6px"}
+SCROLL_AREA = {
+    "flex": "1 1 auto",
+    "overflowY": "auto",
+    "maxHeight": "120px",
+    "paddingRight": "6px",
+}
+
 
 def build_layout(*, cancer_options, line_options, treatment_options, metric_options, year_options):
     return html.Div(
@@ -107,15 +113,23 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                                 clearable=False,
                                 style={"width": "100%", "position": "relative", "zIndex": 900},
                             ),
-                            html.Div(style={"height": "12px"}),
-                            html.Div("Year", style=LABEL_STYLE),
-                            dcc.Dropdown(
-                                id="year-dd",
-                                options=year_options,    # 1 / 2 / 3
-                                value=year_options[0]["value"] if year_options else "1",
-                                clearable=False,
-                                style={"width": "100%"},
+
+                            # Year (wrapped so we can show/hide as one unit)
+                            html.Div(
+                                id="year-block",
+                                children=[
+                                    html.Div(style={"height": "12px"}),
+                                    html.Div("Year", style=LABEL_STYLE),
+                                    dcc.Dropdown(
+                                        id="year-dd",
+                                        options=year_options,    # 1 / 2 / 3
+                                        value=year_options[0]["value"] if year_options else "1",
+                                        clearable=False,
+                                        style={"width": "100%"},
+                                    ),
+                                ],
                             ),
+
                             html.Div(style={"height": "12px"}),
                             html.Div("View", style=LABEL_STYLE),
                             dcc.RadioItems(
@@ -159,7 +173,7 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                     "height": "auto",         # grow with figure height
                     "overflow": "hidden",
                     "paddingTop": "8px",
-                    "paddingBottom": "12px",
+                    "paddingBottom": "20px",  # a little extra for bottom legend
                 },
             ),
 
@@ -171,7 +185,7 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                     [
                         html.Div("Heads up", style={"fontWeight": 800, "fontSize": "18px", "marginBottom": "8px"}),
                         html.P(
-                            "Must select at least 1 option in each control (cancers, treatment setting, year, and outcome metric).",
+                            "Must select at least 1 option in each control (cancers, treatment setting, outcome metric, and year when applicable).",
                             style={"margin": 0, "lineHeight": "1.4"},
                         ),
                         html.Button(
@@ -212,8 +226,8 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
         style={
             "fontFamily": "Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'",
             "backgroundColor": TEAL_BG,
-            "minHeight": "100vh",  
-            "overflowY": "auto",    # allow page to scroll when controls grow
+            "minHeight": "100vh",     # allow page to grow
+            "overflowY": "auto",      # scroll when controls grow
             "padding": "20px",
             "display": "flex",
             "flexDirection": "column",
