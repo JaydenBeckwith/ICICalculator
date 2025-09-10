@@ -2,7 +2,7 @@
 import pathlib
 import pandas as pd
 from typing import Dict
-import dash
+import os, dash
 
 import ui
 import backend

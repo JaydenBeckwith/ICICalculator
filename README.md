@@ -19,13 +19,12 @@ Clone the repository and install dependencies:
 
 ```bash
 git clone https://github.com/yourusername/ICICalculator.git
-cd ICICalculator
-pip install -r requirements.txt 
-```
-## Run the app 
 
-```bash
-python3 app.py
+# build the docker image
+docker build -t ici-calculator .     
+
+# run the dashboard locally 
+docker run -p 8050:8050 ici-calculator
 ```
 
 ## Run tests 
