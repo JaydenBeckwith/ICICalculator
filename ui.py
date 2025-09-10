@@ -6,7 +6,7 @@ CARD_BG = "#ccf0e9"
 BORDER = "#0b4f4a"
 
 LABEL_STYLE = {"color": "black", "fontSize": "14px", "marginBottom": "6px", "fontWeight": 700}
-TITLE_STYLE = {"color": "#ecdd0b", "fontSize": "24px", "fontWeight": 700}
+TITLE_STYLE = {"color": "#ecdd0b", "fontSize": "26px", "fontWeight": 700}
 SUBTLE_STYLE = {"color": "#ecdd0b", "fontSize": "16px"}
 
 CONTROL_STYLE = {
@@ -39,7 +39,6 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                         [
                             html.Div("Stage IV Checkpoint Inhibitor Outcome Visualiser", style=TITLE_STYLE),
                             html.Div(
-                                "Select cancer type, treatment setting, regimen, year, and outcome metric",
                                 style=SUBTLE_STYLE,
                             ),
                         ],
@@ -89,25 +88,6 @@ def build_layout(*, cancer_options, line_options, treatment_options, metric_opti
                                     id="line-ck",
                                     options=line_options,
                                     value=[opt["value"] for opt in line_options],
-                                    inline=False,
-                                    inputStyle={"marginRight": "6px"},
-                                    labelStyle={"display": "block", "marginBottom": "6px", "color": "black"},
-                                ),
-                                style=SCROLL_AREA,
-                            ),
-                        ],
-                        style=CARD_STYLE,
-                    ),
-
-                    # Regimens
-                    html.Div(
-                        [
-                            html.Div("Therapy Regimen(s)", style=LABEL_STYLE),
-                            html.Div(
-                                dcc.Checklist(
-                                    id="treat-ck",
-                                    options=treatment_options,
-                                    value=[opt["value"] for opt in treatment_options],
                                     inline=False,
                                     inputStyle={"marginRight": "6px"},
                                     labelStyle={"display": "block", "marginBottom": "6px", "color": "black"},

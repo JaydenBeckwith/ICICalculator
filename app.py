@@ -1,4 +1,4 @@
-# app.py — main runner
+# main runner
 import pathlib
 import pandas as pd
 from typing import Dict
@@ -53,7 +53,7 @@ year_options = [
     {"label": "2-year", "value": "2"}
 ]
 
-# Colors = regimens
+# Colours = regimens
 COLOUR_MAP = {
     "PD-1 + CTLA-4": "#07ac1d",
     "Neither": "#e00a0a",
@@ -65,7 +65,7 @@ CONFIG = {
     "TREATMENT_PREFIX_MAP": TREATMENT_PREFIX_MAP,
     "COLOR_MAP": COLOUR_MAP,
     # Map a year to the month suffix used in columns for time-based metrics
-    # (ORR ignores this)
+
     "YEAR_TO_MONTHS": {
         "1": "12",
         "2": "24"
